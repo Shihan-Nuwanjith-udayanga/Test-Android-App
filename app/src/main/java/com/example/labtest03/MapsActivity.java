@@ -1,7 +1,11 @@
 package com.example.labtest03;
 
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
@@ -22,6 +26,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
     List<Address> listGeoCoder;
+    private static final int LOCATION_PERMISSION_CODE = 101;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,10 +35,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+        if (isPermissionGranted()) {
+            // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+            SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                    .findFragmentById(R.id.map);
+            mapFragment.getMapAsync(this);
+        } else {
+            requestLocationPermission();
+        }
 
         try {
             listGeoCoder = new Geocoder(this).getFromLocationName
@@ -43,11 +52,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             double latitude = listGeoCoder.get(0).getLatitude();
             String countryName = listGeoCoder.get(0).getCountryName();
 
-            Log.i("GOOGLE_MAP_TAG", "longitude is : "+ String.valueOf(longitude));
-            Log.i("GOOGLE_MAP_TAG", "Latitude is : "+ String.valueOf(latitude));
-            Log.i("GOOGLE_MAP_TAG", "Country is: "+ String.valueOf(countryName));
+            Log.i("GOOGLE_MAP_TAG", "longitude is : " + String.valueOf(longitude));
+            Log.i("GOOGLE_MAP_TAG", "Latitude is : " + String.valueOf(latitude));
+            Log.i("GOOGLE_MAP_TAG", "Country is: " + String.valueOf(countryName));
 
-        }catch (Exception exception){
+        } catch (Exception exception) {
             exception.printStackTrace();
         }
     }
@@ -63,12 +72,29 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        /*mMap = googleMap;
+       mMap = googleMap;
 
-        // Add a marker in Sydney and move the camera
-        LatLng galle = new LatLng(6.0343813717254084, 80.21654526534354);
-        mMap.addMarker(new MarkerOptions().position(galle).title("Marker in Galle, Sri Lanka"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(galle, 18.0f));
-        mMap.getUiSettings().setZoomControlsEnabled(true);*/
+
+        //Request runtime permissions
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == getPackageManager().PERMISSION_GRANTED) {
+            mMap.setMyLocationEnabled(true);
+        }
+    }
+
+    // Check the location Permission-granted or not
+    public boolean isPermissionGranted() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    // Request location permission
+    private void requestLocationPermission() {
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}
+                , LOCATION_PERMISSION_CODE
+        );
     }
 }
